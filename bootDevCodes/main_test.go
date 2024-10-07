@@ -2,55 +2,89 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 	"testing"
 )
 
-func getMessageText(m messageToSend) string {
-	return fmt.Sprintf("Sending message: '%s' to: %v", m.message, m.phoneNumber)
-}
-
 func Test(t *testing.T) {
-	type testCase struct {
-		phoneNumber int
-		message     string
-		expected    string
-	}
-	tests := []testCase{
-		{148255510981, "Thanks for signing up", "Sending message: 'Thanks for signing up' to: 148255510981"},
-		{148255510982, "Love to have you aboard!", "Sending message: 'Love to have you aboard!' to: 148255510982"},
+	tests := []struct {
+		notification       notification
+		expectedID         string
+		expectedImportance int
+	}{
+		{
+			directMessage{senderUsername: "Kaladin", messageContent: "Life before death", priorityLevel: 10, isUrgent: true},
+			"Kaladin",
+			50,
+		},
+		{
+			groupMessage{groupName: "Bridge 4", messageContent: "Soups ready!", priorityLevel: 2},
+			"Bridge 4",
+			2,
+		},
+		{
+			systemAlert{alertCode: "ALERT001", messageContent: "THIS IS NOT A TEST HIGH STORM COMING SOON"},
+			"ALERT001",
+			100,
+		},
 	}
 	if withSubmit {
-		tests = append(tests, []testCase{
-			{148255510983, "We're so excited to have you", "Sending message: 'We're so excited to have you' to: 148255510983"},
-			{148255510984, "", "Sending message: '' to: 148255510984"},
-			{148255510985, "Hello, World!", "Sending message: 'Hello, World!' to: 148255510985"},
-		}...)
+		tests = append(tests,
+			struct {
+				notification       notification
+				expectedID         string
+				expectedImportance int
+			}{
+				directMessage{senderUsername: "Shallan", messageContent: "I am that I am.", priorityLevel: 5, isUrgent: false},
+				"Shallan",
+				5,
+			},
+			struct {
+				notification       notification
+				expectedID         string
+				expectedImportance int
+			}{
+				groupMessage{groupName: "Knights Radiant", messageContent: "For the greater good.", priorityLevel: 10},
+				"Knights Radiant",
+				10,
+			},
+			struct {
+				notification       notification
+				expectedID         string
+				expectedImportance int
+			}{
+				directMessage{senderUsername: "Adolin", messageContent: "Duels are my favorite.", priorityLevel: 3, isUrgent: true},
+				"Adolin",
+				50,
+			},
+		)
 	}
 
 	passCount := 0
 	failCount := 0
 
-	for _, test := range tests {
-		output := getMessageText(messageToSend{
-			phoneNumber: test.phoneNumber,
-			message:     test.message,
-		})
-		if output != test.expected {
-			failCount++
-			t.Errorf(`---------------------------------
-Inputs:     (%v, %v)
-Expecting:  %v
-Actual:     %v
-Fail`, test.phoneNumber, test.message, test.expected, output)
-		} else {
-			passCount++
-			fmt.Printf(`---------------------------------
-Inputs:     (%v, %v)
-Expecting:  %v
-Actual:     %v
+	for i, test := range tests {
+		t.Run("TestProcessNotification_"+strconv.Itoa(i+1), func(t *testing.T) {
+			id, importance := processNotification(test.notification)
+			if id != test.expectedID || importance != test.expectedImportance {
+				failCount++
+				t.Errorf(`---------------------------------
+Test Failed: TestProcessNotification_%d
+Notification: %+v
+Expecting:    %v/%d
+Actual:       %v/%d
+Fail`, i+1, test.notification, test.expectedID, test.expectedImportance, id, importance)
+			} else {
+				passCount++
+				fmt.Printf(`---------------------------------
+Test Passed: TestProcessNotification_%d
+Notification: %+v
+Expecting:    %v/%d
+Actual:       %v/%d
 Pass
-`, test.phoneNumber, test.message, test.expected, output)
-		}
+`, i+1, test.notification, test.expectedID, test.expectedImportance, id, importance)
+			}
+		})
 	}
 
 	fmt.Println("---------------------------------")
