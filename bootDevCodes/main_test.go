@@ -5,58 +5,65 @@ import (
 	"testing"
 )
 
-func Test(t *testing.T){
-	type testCase struct {
-		msgToCustomer string
-		msgToSpouse string
-		expectedCost int
-		expectedErr error
+func TestValidateStatus(t *testing.T) {
+	testingCases := []struct{
+		status string
+		expectedErr string 
+
+	}{
+		{"", "status cannot be empty"},
+		{"This is a valid status update that is well within the character limit.", ""},
+		{"This status update is way too long. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco.", "status exceeds 140 characters"},
 	}
-	tests := []testCase{
-		{"Thanks for coming in to our flower shop today!", "We hope you enjoyed your gift.", 0, fmt.Errorf("can't send texts over 25 characters")},
-		{"Thanks for joining us!", "Have a good day.", 76, nil},
-	}
+
 	if(withSubmit){
-		tests = append(tests, []testCase{
-			{"Thank you.", "Enjoy!", 32, nil},
-			{"We loved having you in!","We hope the rest of your evening is fantastinc.", 0, fmt.Errorf("can't send texts over 25 characters")},
+		testingCases = append(testingCases,struct{
+			status string
+			expectedErr string 
+	
+		}{
+			"Another valid status.", ""		},
+			struct{
+				status string
+				expectedErr string 
+		
+			}{"This status update, while derivative, contains exactly one hundred and forty-one characters, which is over the status update character limit.", "status exceeds 140 characters"},
 
-
-		}...)
+		)
 	}
-failCount := 0
-passCount := 0
 
-	for _,test := range tests {
-		cost, err := sendSMSToCouple(test.msgToCustomer, test.msgToSpouse)
+
+	passCount :=0
+	failCount :=0
+
+	for _, tc := range testingCases{
+		err := validateStatus(tc.status)
 		errString := ""
-		if err != nil {
-			errString = test.expectedErr.Error()
-		}
-		expectedErrString := ""
-		if test.expectedErr != nil{
-			expectedErrString = test.expectedErr.Error()
-		}
-		if cost != test.expectedCost || errString != expectedErrString{
-			failCount ++
-			t.Errorf(`_________________________
-			Inputs: (%v,%v)
-			Expecting (%v, %v)
-			Actual: (%v, %v)
-			Fail`, test.msgToCustomer, test.msgToSpouse, test.expectedCost, test.expectedErr, cost, err)
 
-		} else{
-			passCount++
-			fmt.Printf(`_______________________ 
-			Inputs: (%v,%v)
-			Expecting (%v, %v)
-			Actual: (%v, %v)
-			Pass	
-			`, test.msgToCustomer, test.msgToSpouse, test.expectedCost, test.expectedErr, cost, err)
+		if err != nil {
+			errString = err.Error()
 		}
+
+		if errString != tc.expectedErr{
+			failCount++
+			t.Errorf(`---------------------------------
+Inputs:     "%v"
+Expecting:  "%v"
+Actual:     "%v"
+Fail`, tc.status, tc.expectedErr, errString)
+		} else {
+			passCount++
+			fmt.Printf(`---------------------------------
+Inputs:     "%v"
+Expecting:  "%v"
+Actual:     "%v"
+Pass
+`, tc.status, tc.expectedErr, errString)
+		}
+		
 	}
 
-	fmt.Println("------------------")
+	fmt.Println("---------------------------------")
 	fmt.Printf("%d passed, %d failed\n", passCount, failCount)
 
 }
