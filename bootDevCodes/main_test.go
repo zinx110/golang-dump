@@ -7,104 +7,103 @@ import (
 
 func Test(t *testing.T) {
 	type testCase struct {
-		messages         []string
-		expectedMessages [3]string
-		expectedCosts    [3]int
+		names    []string
+		initial  rune
+		name     string
+		expected int
 	}
-	tests := []testCase{
-		{
-			[]string{
-				"Hello sir/madam can I interest you in a yacht?",
-				"Please I'll even give you an Amazon gift card?",
-				"You're missing out big time",
-			},
-			[3]string{
-				"Hello sir/madam can I interest you in a yacht?",
-				"Please I'll even give you an Amazon gift card?",
-				"You're missing out big time",
-			},
-			[3]int{46, 92, 119},
-		},
-		{
-			[]string{"It's the spring fling sale!", "Don't miss this event!", "Last chance."},
-			[3]string{"It's the spring fling sale!", "Don't miss this event!", "Last chance."},
-			[3]int{27, 49, 61},
-		},
+
+	runCases := []testCase{
+		{getNames(50), 'M', "Matthew", 3},
+		{getNames(100), 'G', "George", 1},
+		{getNames(300), '😊', "😊", 1},
 	}
+
+	submitCases := append(runCases, []testCase{
+		{getNames(150), 'D', "Drew", 4},
+		{getNames(200), 'P', "Philip", 4},
+		{getNames(250), 'B', "Bryant", 1},
+	}...)
+
+	testCases := runCases
 	if withSubmit {
-		tests = append(tests, []testCase{
-			{
-				[]string{
-					"Put that coffee down!",
-					"Coffee is for closers",
-					"Always be closing",
-				},
-				[3]string{
-					"Put that coffee down!",
-					"Coffee is for closers",
-					"Always be closing",
-				},
-				[3]int{21, 42, 59},
-			},
-		}...)
+		testCases = submitCases
 	}
+	skipped := len(submitCases) - len(testCases)
 
 	passCount := 0
 	failCount := 0
 
-	for _, test := range tests {
-		actualMessages, actualCosts := getMessageWithRetries(test.messages[0], test.messages[1], test.messages[2])
-		if actualMessages[0] != test.expectedMessages[0] ||
-			actualMessages[1] != test.expectedMessages[1] ||
-			actualMessages[2] != test.expectedMessages[2] ||
-			actualCosts[0] != test.expectedCosts[0] ||
-			actualCosts[1] != test.expectedCosts[1] ||
-			actualCosts[2] != test.expectedCosts[2] {
+	for _, test := range testCases {
+		output := getNameCounts(test.names)
+		if output[test.initial][test.name] != test.expected {
 			failCount++
 			t.Errorf(`---------------------------------
 Test Failed:
-Inputs:
-%v
-Expecting:
-%v
-%v
-Actual:
-%v
-%v
-Fail
-`, sliceWithBullets(test.messages), sliceWithBullets(test.expectedMessages[:]), test.expectedCosts, sliceWithBullets(actualMessages[:]), actualCosts)
+  len(names): %v
+  initial: %c
+  name: %s
+  expected: %d
+  actual: %d
+`, len(test.names), test.initial, test.name, test.expected, output[test.initial][test.name])
 		} else {
 			passCount++
 			fmt.Printf(`---------------------------------
 Test Passed:
-Inputs:
-%v
-Expecting:
-%v
-%v
-Actual:
-%v
-%v
-Pass
-`, sliceWithBullets(test.messages), sliceWithBullets(test.expectedMessages[:]), test.expectedCosts, sliceWithBullets(actualMessages[:]), actualCosts)
+  len(names): %v
+  initial: %c
+  name: %s
+  expected: %d
+  actual: %d
+`, len(test.names), test.initial, test.name, test.expected, output[test.initial][test.name])
 		}
 	}
 
 	fmt.Println("---------------------------------")
-	fmt.Printf("%d passed, %d failed\n", passCount, failCount)
-}
-
-func sliceWithBullets[T any](slice []T) string {
-	output := ""
-	for i, item := range slice {
-		form := "  - %v\n"
-		if i == (len(slice) - 1) {
-			form = "  - %v"
-		}
-		output += fmt.Sprintf(form, item)
+	if skipped > 0 {
+		fmt.Printf("%d passed, %d failed, %d skipped\n", passCount, failCount, skipped)
+	} else {
+		fmt.Printf("%d passed, %d failed\n", passCount, failCount)
 	}
-	return output
+
 }
 
-// withSubmit is set at compile time depending on which button is used to run the tests
+func getNames(length int) []string {
+	return []string{
+		"Grant", "Eduardo", "Peter", "Matthew", "Matthew", "Matthew", "Peter", "Peter", "Henry", "Parker",
+		"Parker", "Parker", "Collin", "Hayden", "George", "Bradley", "Mitchell", "Devon", "Ricardo", "Shawn",
+		"Taylor", "Nicolas", "Gregory", "Francisco", "Liam", "Kaleb", "Preston", "Erik", "Alexis", "Owen",
+		"Omar", "Diego", "Dustin", "Corey", "Fernando", "Clayton", "Carter", "Ivan", "Jaden", "Javier",
+		"Alec", "Johnathan", "Scott", "Manuel", "Cristian", "Alan", "Raymond", "Brett", "Max", "Drew",
+		"Andres", "Gage", "Mario", "Dawson", "Dillon", "Cesar", "Wesley", "Levi", "Jakob", "Chandler",
+		"Martin", "Malik", "Edgar", "Sergio", "Trenton", "Josiah", "Nolan", "Marco", "Drew", "Peyton",
+		"Harrison", "Drew", "Hector", "Micah", "Roberto", "Drew", "Brady", "Erick", "Conner", "Jonah",
+		"Casey", "Jayden", "Edwin", "Emmanuel", "Andre", "Phillip", "Brayden", "Landon", "Giovanni", "Bailey",
+		"Ronald", "Braden", "Damian", "Donovan", "Ruben", "Frank", "Gerardo", "Pedro", "Andy", "Chance",
+		"Abraham", "Calvin", "Trey", "Cade", "Donald", "Derrick", "Payton", "Darius", "Enrique", "Keith",
+		"Raul", "Jaylen", "Troy", "Jonathon", "Cory", "Marc", "Eli", "Skyler", "Rafael", "Trent",
+		"Griffin", "Colby", "Johnny", "Chad", "Armando", "Kobe", "Caden", "Marcos", "Cooper", "Elias",
+		"Brenden", "Israel", "Avery", "Zane", "Zane", "Zane", "Zane", "Dante", "Josue", "Zackary",
+		"Allen", "Philip", "Mathew", "Dennis", "Leonardo", "Ashton", "Philip", "Philip", "Philip", "Julio",
+		"Miles", "Damien", "Ty", "Gustavo", "Drake", "Jaime", "Simon", "Jerry", "Curtis", "Kameron",
+		"Lance", "Brock", "Bryson", "Alberto", "Dominick", "Jimmy", "Kaden", "Douglas", "Gary", "Brennan",
+		"Zachery", "Randy", "Louis", "Larry", "Nickolas", "Albert", "Tony", "Fabian", "Keegan", "Saul",
+		"Danny", "Tucker", "Myles", "Damon", "Arturo", "Corbin", "Deandre", "Ricky", "Kristopher", "Lane",
+		"Pablo", "Darren", "Jarrett", "Zion", "Alfredo", "Micheal", "Angelo", "Carl", "Oliver", "Kyler",
+		"Tommy", "Walter", "Dallas", "Jace", "Quinn", "Theodore", "Grayson", "Lorenzo", "Joe", "Arthur",
+		"Bryant", "Roman", "Brent", "Russell", "Ramon", "Lawrence", "Moises", "Aiden", "Quentin", "Jay",
+		"Tyrese", "Tristen", "Emanuel", "Salvador", "Terry", "Morgan", "Jeffery", "Esteban", "Tyson", "Braxton",
+		"Branden", "Marvin", "Brody", "Craig", "Ismael", "Rodney", "Isiah", "Marshall", "Maurice", "Ernesto",
+		"Emilio", "Brendon", "Kody", "Eddie", "Malachi", "Abel", "Keaton", "Jon", "Shaun", "Skylar",
+		"Ezekiel", "Nikolas", "Santiago", "Kendall", "Axel", "Camden", "Trevon", "Bobby", "Conor", "Jamal",
+		"Lukas", "Malcolm", "Zackery", "Jayson", "Javon", "Roger", "Reginald", "Zachariah", "Desmond", "Felix",
+		"Johnathon", "Dean", "Quinton", "Ali", "Davis", "Gerald", "Rodrigo", "Demetrius", "Billy", "Rene",
+		"Reece", "Kelvin", "Leo", "Justice", "Chris", "Guillermo", "Matthew", "Matthew", "Matthew", "Kevon",
+		"Steve", "Frederick", "Clay", "Weston", "Dorian", "Hugo", "Roy", "Orlando", "Terrance", "😊",
+		"Kai", "Khalil", "Khalil", "Khalil", "Graham", "Noel", "Willie", "Nathanael", "Terrell",
+	}[:length]
+}
+
+// withSubmit is set at compile time depending
+// on which button is used to run the tests
 var withSubmit = true
