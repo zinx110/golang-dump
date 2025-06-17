@@ -1,16 +1,39 @@
 package main
 
-func getNameCounts(names []string) map[rune]map[string]int {
-	nameCounts := make(map[rune]map[string]int)
-	for _,name := range names{
-		runes := []rune(name)
-		firstRune := runes[0]
-		if nameCounts[firstRune] == nil {
-			nameCounts[firstRune] = map[string]int{name:1}
-			continue
-		}
-		nameCounts[firstRune][name]++
-	}
+import "errors"
 
-	return nameCounts
+type customer struct {
+	id      int
+	balance float64
+}
+
+type transactionType string
+
+const (
+	transactionDeposit    transactionType = "deposit"
+	transactionWithdrawal transactionType = "withdrawal"
+)
+
+type transaction struct {
+	customerID      int
+	amount          float64
+	transactionType transactionType
+}
+
+// Don't touch above this line
+
+// ?
+func updateBalance(cus *customer, deposit transaction)error{
+	if deposit.transactionType == transactionDeposit {
+		cus.balance +=deposit.amount
+	}else if deposit.transactionType == transactionWithdrawal{
+		if cus.balance <= deposit.amount{
+			return errors.New("insufficient funds")
+		}
+		cus.balance -=deposit.amount
+
+	}else{
+		return errors.New("unknown transaction type")
+	}
+	return nil
 }
